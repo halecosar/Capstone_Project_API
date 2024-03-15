@@ -1,5 +1,5 @@
 package dev.patika.veterinary_project.entities;
-
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -33,7 +33,7 @@ public class Appointment {
     @JoinColumn(name = "appointment_doctor_id", referencedColumnName = "doctor_id")
     private Doctor doctor;
 
-    @OneToOne
-    @JoinColumn(name = "appointment_report_id", referencedColumnName = "id")
+    @OneToOne(mappedBy = "appointment", fetch = FetchType.EAGER)
+    @JsonIgnore
     private Report report;
 }
