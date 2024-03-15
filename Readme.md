@@ -1,22 +1,51 @@
-                                  Veterinary Management System
+
+# Veterinary Management System Application
+
+Bu proje, veteriner kliniklerinin yönetimi için bir web uygulamasıdır. Müşterilerin, hayvanların, doktorların, randevuların, raporların ve aşıların yönetimini sağlar.
+
+# Özellikler
+
+Müşterilerin kaydedilmesi, listelenmesi, düzenlenmesi, aranması ve silinmesi.
+Müşterilere ait hayvanların kaydedilmesi, listelenmesi, düzenlenmesi, aranması ve silinmesi.
+Veteriner doktorların kaydedilmesi, listelenmesi, düzenlenmesi, aranması ve silinmesi.
+Veteriner doktorların müsait günlerinin kaydedilmesi, listelenmesi, düzenlenmesi, aranması ve silinmesi.
+Hayvanlar için randevuların oluşturulması.
+Hayvanlara ait raporların ve aşı kayıtlarının kaydedilmesi.
+
+**Silmek ve güncellemek için ilgili satır seçilir, güncelleme işlemi için  çift tıklanarak hücrede değişiklik yapılır veya listeden değişiklik yapılır. Ardından güncelleme butonuna basılır. Silme işleminde ilgili satıra tıklanır ve silme butonuna tıklanır.
+
+**Doktora müsait gün eklemek için doktor listesinden ilgili doktor seçilir aşağıda açılan datepicker üzerinden uygun tarih seçilir, kaydet butonuna basılır. Altında açılan datagridde güncelleme ve silme işlemleri yapılır.
 
 
-This project involves the development of an API that enables a veterinary clinic to manage its own operations.
 
-The application is intended for use by veterinary clinic staff. With this application, the staff can:
+# Canlı Link
+https://veterinaryapp.netlify.app/
 
-Register veterinary doctors,
-Record the working days (available days) of doctors. The registration can be made with the date only, without specifying the time,
-Register customers,
-Register animals belonging to customers,
-Record vaccinations administered to animals, along with their dates,
-Schedule appointments for animals with veterinary doctors,
-Specify both the available days of the doctor and perform a date and time check without overlapping with existing appointment records while creating an appointment.
 
-You can see the UML diagram below for the application.
-![UMLdiagram](https://github.com/halecosar/Hafta-13/assets/142445977/f4fe3c3f-5ffd-4961-81a6-705967a04000)
 
-You can view the database backup within the .sql file.
 
-You can access the API endpoints for CRUD operations and filtering by ID, date, and name through the following Postman collection
-https://api.postman.com/collections/31494731-2bc5ba61-b798-4459-b21f-c1d46c760da4?access_key=PMAT-01HHCFMQ8DWM6Y4CQBDVNFZV9N
+## Teknolojiler:
+
+**Client:**  React.js, React Router, Material-UI, Formik
+
+**Server:** Spring Boot, PostgreSQL
+
+
+## Screenshots
+
+
+![vetappUML](https://github.com/halecosar/Capstone_Project/assets/142445977/655b0e8e-9282-44d4-a6b1-0dd49d3cadee)
+![vetapphome](https://github.com/halecosar/Capstone_Project/assets/142445977/fbd85774-c6a3-4ded-b133-88a711b2ea59)
+![vetappappointment](https://github.com/halecosar/Capstone_Project/assets/142445977/2e9a2d1a-0855-43df-b63f-454b17725dc4)
+![vetappdoctor](https://github.com/halecosar/Capstone_Project/assets/142445977/78e88c9d-375a-4567-b6fb-bb0ec1117b9f)
+![vetappreports](https://github.com/halecosar/Capstone_Project/assets/142445977/2afc8373-5652-4a51-b283-11b36ac42b2e)
+
+
+
+
+## License
+
+[MIT](https://choosealicense.com/licenses/mit/)
+
+
+
