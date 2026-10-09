@@ -18,7 +18,7 @@ import java.util.List;
 public class Doctor {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "doctor_id", columnDefinition = "serial")
+    @Column(name = "doctor_id")
     private Long id;
 
     @Column(name = "doctor_name")
