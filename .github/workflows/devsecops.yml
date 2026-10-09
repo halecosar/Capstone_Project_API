@@ -1,0 +1,148 @@
+# .github/workflows/devsecops.yml
+# DevSecOps pipeline for Capstone_Project_API (Spring Boot 3, Java 17, PostgreSQL)
+# Stages: secret scanning -> SAST -> build + dependency scan (SCA) -> container scan -> DAST
+
+name: DevSecOps
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * 1" # every Monday, catches newly published CVEs
+
+permissions:
+  contents: read
+  security-events: write # upload SARIF results to the Security tab
+
+jobs:
+  # 1) Secret scanning: leaked passwords, tokens, keys in code and git history
+  secrets:
+    name: Secret scan (Gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # 2) SAST: static analysis of the Java source
+  sast:
+    name: SAST (Semgrep)
+    runs-on: ubuntu-latest
+    container:
+      image: semgrep/semgrep
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Semgrep
+        run: semgrep scan --config p/java --config p/owasp-top-ten --sarif --output semgrep.sarif || true
+      - uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: semgrep.sarif
+          category: semgrep
+
+  # 3) Build + SCA: vulnerable Maven dependencies
+  build-and-sca:
+    name: Build + dependency scan (Trivy)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+      - name: Build
+        run: mvn -B clean package -DskipTests
+      - name: Trivy filesystem scan (pom.xml dependencies)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,misconfig
+          severity: HIGH,CRITICAL
+          format: sarif
+          output: trivy-fs.sarif
+          exit-code: "0" # set to "1" once findings are fixed to block merges
+      - uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: trivy-fs.sarif
+          category: trivy-fs
+
+  # 4) Container scan: OS packages and libraries inside the Docker image
+  container-scan:
+    name: Container image scan (Trivy)
+    runs-on: ubuntu-latest
+    needs: build-and-sca
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build -t vetapp-api:${{ github.sha }} .
+      - name: Trivy image scan
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: vetapp-api:${{ github.sha }}
+          severity: HIGH,CRITICAL
+          format: sarif
+          output: trivy-image.sarif
+          exit-code: "0"
+      - uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: trivy-image.sarif
+          category: trivy-image
+
+  # 5) DAST: run the API against a throwaway PostgreSQL and attack it with OWASP ZAP
+  dast:
+    name: DAST (OWASP ZAP baseline)
+    runs-on: ubuntu-latest
+    needs: container-scan
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: veterinaryMS
+          POSTGRES_USER: ci_user
+          POSTGRES_PASSWORD: ci_password # throwaway, CI-only database
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ci_user"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and start the API
+        run: |
+          docker build -t vetapp-api:dast .
+          docker run -d --name api --network host \
+            -e SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/veterinaryMS \
+            -e SPRING_DATASOURCE_USERNAME=ci_user \
+            -e SPRING_DATASOURCE_PASSWORD=ci_password \
+            vetapp-api:dast
+      - name: Wait for the API
+        run: |
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:8080/v1/customers > /dev/null && exit 0
+            sleep 3
+          done
+          docker logs api
+          exit 1
+      - name: ZAP baseline scan
+        run: |
+          mkdir -p zap && chmod 777 zap
+          docker run --network host -v "$PWD/zap:/zap/wrk:rw" ghcr.io/zaproxy/zaproxy:stable \
+            zap-baseline.py -t http://localhost:8080/v1/customers \
+            -r zap-report.html -J zap-report.json -I
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: zap-report
+          path: zap/
