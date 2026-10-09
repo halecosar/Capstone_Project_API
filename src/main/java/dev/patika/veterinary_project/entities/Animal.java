@@ -21,7 +21,7 @@ import java.util.List;
 public class Animal {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "animal_id", columnDefinition = "serial")
+    @Column(name = "animal_id")
     private Long id;
 
     @Column(name = "animal_name")
