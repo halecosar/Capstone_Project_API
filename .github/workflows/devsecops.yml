@@ -127,7 +127,7 @@ jobs:
       - name: Wait for the API
         run: |
           for i in $(seq 1 30); do
-            curl -sf http://localhost:8080/v1/customers > /dev/null && exit 0
+            curl -sf http://localhost:8080/v1/customers/findAll > /dev/null && exit 0
             sleep 3
           done
           docker logs api
@@ -136,7 +136,7 @@ jobs:
         run: |
           mkdir -p zap && chmod 777 zap
           docker run --network host -v "$PWD/zap:/zap/wrk:rw" ghcr.io/zaproxy/zaproxy:stable \
-            zap-baseline.py -t http://localhost:8080/v1/customers \
+            zap-baseline.py -t http://localhost:8080/v1/customers/findAll \
             -r zap-report.html -J zap-report.json -I
       - uses: actions/upload-artifact@v4
         if: always()
